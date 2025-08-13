@@ -1,0 +1,658 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pariwisata Banjarnegara — Versi Offline</title>  <!-- Google font (opsional; jika murni offline, hapus baris ini) -->  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">  <style>
+    :root{
+      --primary:#0f766e;
+      --muted:#A39D9D;
+      --bg:#FFFFFF;
+      --card:#ffffff;
+      --text:#0f172a;
+      --radius:12px;
+      --maxw:1100px;
+      --shadow:0 8px 24px rgba(2,6,23,0.06);
+      --glass: rgba(255,255,255,0.6);
+    }
+    [data-theme="dark"]{
+      --primary:#34d399;
+      --muted:#9ca3af;
+      --bg:#0b1220;
+      --card:#071122;
+      --text:#e6eef6;
+      --glass: rgba(0,0,0,0.4);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    html,body{margin:0;padding:0;height:100%}
+    body{
+      font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);background:var(--bg);
+      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    }
+    a{color:inherit;text-decoration:none}
+
+    /* header */
+    header{position:fixed;top:0;left:0;right:0;background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));backdrop-filter: blur(6px);box-shadow:0 2px 8px rgba(0,0,0,0.05);z-index:1200}
+    [data-theme="dark"] header{background:linear-gradient(180deg, rgba(8,12,18,0.7), rgba(8,12,18,0.5));}
+    .nav-container{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 20px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{font-weight:700;color:var(--primary);font-size:18px}
+    nav{display:flex;gap:18px;align-items:center}
+    nav a{color:var(--muted);font-weight:600}
+    nav a.active{color:var(--primary)}
+    .menu-btn{display:none;cursor:pointer;gap:4px;flex-direction:column;border:0;background:transparent}
+    .menu-btn span{display:block;width:24px;height:3px;background:var(--muted);border-radius:3px}
+
+    .controls {display:flex;gap:10px;align-items:center}
+    .btn {background:var(--primary);color:white;border:0;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600}
+    .icon-btn {background:transparent;border:0;padding:6px;border-radius:8px;cursor:pointer}
+
+    @media(max-width:768px){
+      nav{display:none;position:absolute;right:20px;top:60px;background:var(--card);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;flex-direction:column;padding:6px}
+      nav.show{display:flex}
+      .menu-btn{display:flex}
+      nav a{padding:10px 14px}
+    }
+
+    /* hero slider (native, tanpa library) */
+    .hero {
+      margin-top:64px;position:relative;min-height:460px;overflow:hidden;
+      border-bottom-left-radius:18px;border-bottom-right-radius:18px;
+    }
+    .hero .slides{position:relative;height:100%;width:100%}
+    .slide {position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity .7s ease, transform .7s ease;opacity:0;transform:scale(1.02)}
+    .slide.show{opacity:1;transform:scale(1)}
+    .hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.45));pointer-events:none}
+    .hero .content{position:relative;z-index:4;max-width:1100px;margin:0 auto;padding:60px 20px;color:white;text-align:center}
+    .hero h1{font-size:40px;margin:0 0 12px;line-height:1.05}
+    .hero p{margin:0;font-weight:300;opacity:0.95}
+
+    .hero .slider-controls{position:absolute;left:20px;bottom:20px;z-index:6;display:flex;gap:8px}
+    .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.4);cursor:pointer;outline:0}
+    .dot.active{background:var(--primary)}
+
+    .hero .nav-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:6;background:rgba(0,0,0,0.35);border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:white;border:0;cursor:pointer}
+    .hero .nav-arrow.left{left:12px}
+    .hero .nav-arrow.right{right:12px}
+
+    /* main layout */
+    .wrap{max-width:var(--maxw);margin:36px auto;padding:0 20px}
+    section{margin-bottom:36px;opacity:0;transform:translateY(20px);transition:all .55s cubic-bezier(.2,.9,.3,1)}
+    section.visible{opacity:1;transform:translateY(0)}
+    h2{color:var(--primary);font-size:22px;margin-bottom:14px;font-weight:700}
+
+    /* search + filters */
+    .search-row{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+    .search-row input{flex:1;padding:10px 12px;border:1px solid rgba(0,0,0,0.06);border-radius:10px;font-size:14px;background:var(--card);color:var(--text)}
+    .search-row button{padding:10px 14px;background:var(--primary);color:white;border:0;border-radius:10px;font-weight:600;cursor:pointer}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .chip{padding:7px 12px;border-radius:20px;background:rgba(15,118,110,0.08);color:var(--primary);font-weight:600;cursor:pointer;user-select:none}
+    .chip.active{background:var(--primary);color:white}
+
+    #resultCount{margin-bottom:12px;color:var(--muted);font-weight:600}
+
+    /* loader */
+    .loader{display:none;text-align:center;margin:14px 0}
+    .spinner{width:28px;height:28px;border:4px solid #f3f3f3;border-top:4px solid var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* cards grid */
+    .grid{display:grid;gap:18px;grid-template-columns:repeat(3,1fr)}
+    .card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s;cursor:pointer}
+    .card img{width:100%;height:180px;object-fit:cover}
+    .card .bd{padding:12px}
+    .card h3{margin:0 0 8px;font-size:16px}
+    .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
+    .desc{color:var(--text);font-size:14px;line-height:1.45}
+    .card:hover{transform:translateY(-6px);box-shadow:0 16px 36px rgba(2,6,23,0.12)}
+
+    @media(max-width:1024px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.grid{grid-template-columns:1fr}.nav-container{padding:10px}}
+
+    /* gallery */
+    .gallery{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+    .gallery .big{height:260px;background-size:cover;background-position:center;border-radius:12px}
+    .gallery .small{display:grid;grid-template-rows:1fr 1fr;gap:12px}
+    .gallery img{width:100%;height:100%;object-fit:cover;border-radius:12px}
+    @media(max-width:768px){.gallery{grid-template-columns:1fr}.gallery .big{height:200px}}
+
+    /* contact/map (statis) */
+    .contact-row{display:flex;gap:18px;flex-wrap:wrap}
+    .map{flex:2;min-height:320px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#eef2f6}
+    .map figure{margin:0;position:relative;width:100%}
+    .map-img{width:100%;height:100%;object-fit:cover;display:block}
+    .map .map-cta{position:absolute;right:12px;bottom:12px}
+    .contact-box{flex:1;background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow)}
+    .contact-box p{margin:8px 0;color:var(--muted)}
+
+    /* booking form */
+    .booking { background: var(--card); padding: 18px; border-radius: 12px; box-shadow: var(--shadow); margin-top: 18px; }
+    .booking h3 { margin-top: 0; color: var(--primary); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .form-row.single { grid-template-columns: 1fr; }
+    input[type="text"], input[type="tel"], input[type="email"], input[type="date"], select, textarea { width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; font-size: 14px; background:var(--bg); color:var(--text); }
+    textarea { min-height: 90px; resize: vertical; }
+
+    /* modal quick view */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.5);z-index:2000;padding:20px}
+    .modal.show{display:flex}
+    .modal-card{width:100%;max-width:900px;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+    .modal-body{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .modal-body img{width:100%;height:100%;object-fit:cover}
+    .modal-content{padding:16px}
+    .rating {display:flex;gap:6px;align-items:center;margin:8px 0}
+    .star {color:gold;font-size:18px}
+
+    /* floating WA button */
+    .wa-fab { position: fixed; right: 18px; bottom: 18px; width: 56px; height: 56px; border-radius: 50%; background: #25D366; display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 24px rgba(2,6,23,0.2); z-index: 1400; cursor: pointer; }
+    .wa-fab img{width:28px;height:28px}
+
+    footer{padding:20px;text-align:center;background:var(--primary);color:white;margin-top:32px;border-top-left-radius:8px;border-top-right-radius:8px}
+
+    /* responsive */
+    @media screen and (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; gap: 14px; }
+      .card img { height: 160px; }
+      .hero h1 { font-size: 28px; }
+      .wrap { margin: 16px auto; padding: 0 12px; }
+      .hero { margin-top:56px; }
+    }
+    @media screen and (max-width: 768px) and (orientation: landscape) {
+      .hero { min-height: 60vh; padding-top: 40px; }
+      .hero h1 { font-size: 32px; }
+      .card img { height: 140px; }
+      .gallery .big { height: 200px; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .modal-card { max-height: 90vh; overflow-y: auto; }
+      .form-row { grid-template-columns: 1fr 1fr; }
+      .wrap { max-width: 1000px; padding: 0 12px; }
+      header .nav-container { padding: 10px 12px; }
+      .hero .content { padding: 40px 16px; }
+    }
+    @media screen and (min-width: 769px) and (orientation: landscape) {
+      .hero { min-height: 70vh; }
+      .grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style></head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">Pariwisata Banjarnegara</div>
+      </div><nav role="navigation" aria-label="Utama">
+    <a href="#destinasi">Destinasi</a>
+    <a href="#produk">Produk</a>
+    <a href="#galeri">Galeri</a>
+    <a href="#kontak">Kontak</a>
+  </nav>
+
+  <div class="controls">
+    <button class="icon-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle theme">🌙</button>
+    <button class="menu-btn" id="menuBtn" aria-label="Buka menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</div>
+
+  </header>  <!-- HERO: slider (tanpa CDN) -->  <section class="hero" aria-label="Hero">
+    <div class="slides" id="slides">
+      <!-- Ganti file sesuai folder /img -->
+      <div class="slide show" style="background-image:url('img/banjarnegara-alun2.jpg')" data-title="Jelajahi Keindahan Pariwisata Banjarnegara" data-desc="Gunung, telaga, air terjun, budaya, dan kuliner khas — semuanya menunggu."></div>
+      <div class="slide" style="background-image:url('img/dieng-sunrise.jpg')" data-title="Dataran Tinggi Dieng" data-desc="Nikmati sunrise dan pemandangan kawah yang dramatis."></div>
+      <div class="slide" style="background-image:url('img/curug-pitu.jpg')" data-title="Curug Pitu" data-desc="Air terjun bertingkat dengan jalur trekking yang menyenangkan."></div>
+    </div><div class="content" id="heroContent">
+  <h1 id="heroTitle">Jelajahi Keindahan Pariwisata Banjarnegara</h1>
+  <p id="heroDesc">Gunung, telaga, air terjun, budaya, dan kuliner khas — semuanya menunggu untuk kamu kunjungi.</p>
+</div>
+
+<div class="slider-controls" id="dots"></div>
+<button class="nav-arrow left" id="prevBtn" aria-label="Sebelumnya">‹</button>
+<button class="nav-arrow right" id="nextBtn" aria-label="Berikutnya">›</button>
+
+  </section>  <!-- MAIN -->  <main class="wrap" role="main">
+    <!-- Destinasi (search + filters + cards) -->
+    <section id="destinasi" aria-labelledby="destinasiTitle">
+      <h2 id="destinasiTitle">Destinasi & Produk</h2><div class="search-row" role="search" aria-label="Pencarian destinasi">
+    <input id="searchInput" type="search" placeholder="Cari destinasi atau produk... (mis. Dieng, Curug Pitu)">
+    <button id="searchBtn">Cari</button>
+  </div>
+
+  <div class="chips" role="toolbar" aria-label="Filter kategori">
+    <div class="chip active" data-filter="all" tabindex="0">Semua</div>
+    <div class="chip" data-filter="terdekat" tabindex="0">Terdekat</div>
+    <div class="chip" data-filter="populer" tabindex="0">Populer</div>
+    <div class="chip" data-filter="open" tabindex="0">Open Now</div>
+  </div>
+
+  <div id="resultCount">Menampilkan 9 hasil</div>
+  <div class="loader" aria-hidden="true"><div class="spinner" role="status" aria-hidden="true"></div></div>
+
+  <div id="cardContainer" class="grid" aria-live="polite">
+    <!-- Kartu destinasi; ganti src ke folder img/ -->
+    <article class="card" data-category="populer" data-lat="-7.133" data-lng="109.3" data-images="img/dieng-dataran-tinggi.jpg" data-title="Dataran Tinggi Dieng" data-desc="Dataran Tinggi Dieng: kawah, telaga, sunrise. Disarankan bawa jaket tebal." data-rating="4.7" data-reviews="182">
+      <img src="img/dieng-dataran-tinggi.jpg" alt="Dataran Tinggi Dieng">
+      <div class="bd">
+        <h3>Dataran Tinggi Dieng</h3>
+        <div class="meta">Dataran tinggi • Kawah, telaga, sunrise</div>
+        <p class="desc">Dataran Tinggi Dieng adalah dataran tinggi vulkanik dengan lanskap kawah aktif, telaga berwarna, dan suhu sejuk.</p>
+      </div>
+    </article>
+
+    <article class="card" data-category="terdekat open" data-lat="-7.12" data-lng="109.28" data-images="img/curug-pitu.jpg" data-title="Curug Pitu" data-desc="Curug Pitu: tujuh tingkatan air terjun, jalur trekking mudah." data-rating="4.5" data-reviews="94">
+      <img src="img/curug-pitu.jpg" alt="Curug Pitu">
+      <div class="bd">
+        <h3>Curug Pitu</h3>
+        <div class="meta">Air terjun • Trekking ringan</div>
+        <p class="desc">Curug Pitu menawarkan tujuh tingkatan air terjun dengan pemandangan hijau yang rimbun.</p>
+      </div>
+    </article>
+
+    <article class="card" data-category="populer" data-lat="-7.15" data-lng="109.31" data-images="img/serayu-rafting.jpg" data-title="Serayu Rafting" data-desc="Serayu Rafting: arung jeram menyenangkan untuk kelompok." data-rating="4.3" data-reviews="58">
+      <img src="img/serayu-rafting.jpg" alt="Serayu Rafting">
+      <div class="bd">
+        <h3>Serayu Rafting</h3>
+        <div class="meta">Arung jeram • Petualangan</div>
+        <p class="desc">Pilihan untuk pengunjung yang mencari pengalaman petualangan di sungai dengan jeram menantang.</p>
+      </div>
+    </article>
+
+    <article class="card" data-category="populer" data-lat="-7.14" data-lng="109.29" data-images="img/kawah-sikidang.jpg" data-title="Kawah Sikidang (Dieng)" data-desc="Kawah Sikidang: fenomena geologi, area fumarola. Patuhi rambu keselamatan." data-rating="4.4" data-reviews="123">
+      <img src="img/kawah-sikidang.jpg" alt="Kawah Sikidang">
+      <div class="bd">
+        <h3>Kawah Sikidang (Dieng)</h3>
+        <div class="meta">Fenomena geologi • Aroma belerang</div>
+        <p class="desc">Kawah Sikidang terkenal dengan permukaannya yang bergerak dan aktivitas fumarola.</p>
+      </div>
+    </article>
+
+    <article class="card" data-category="terdekat" data-lat="-7.17" data-lng="109.33" data-images="img/telaga-merdada.jpg" data-title="Telaga Merdada" data-desc="Telaga Merdada: suasana tenang, cocok untuk piknik." data-rating="4.2" data-reviews="41">
+      <img src="img/telaga-merdada.jpg" alt="Telaga Merdada">
+      <div class="bd">
+        <h3>Telaga Merdada</h3>
+        <div class="meta">Telaga • Pemandangan tenang</div>
+        <p class="desc">Telaga Merdada menawarkan permukaan air tenang dan pemandangan pegunungan di sekitarnya.</p>
+      </div>
+    </article>
+
+    <article class="card" data-category="populer" data-lat="-7.16" data-lng="109.30" data-images="img/candi-arjuna.jpg" data-title="Candi Arjuna (Dieng)" data-desc="Kompleks Candi Arjuna: situs sejarah Hindu kuno." data-rating="4.6" data-reviews="77">
+      <img src="img/candi-arjuna.jpg" alt="Candi Arjuna">
+      <div class="bd">
+        <h3>Candi Arjuna (Dieng)</h3>
+        <div class="meta">Candi • Situs sejarah</div>
+        <p class="desc">Kompleks Candi Arjuna menawarkan wawasan sejarah dan arsitektur kuno.</p>
+      </div>
+    </article>
+
+    <article class="card" data-category="terdekat populer" data-lat="-7.18" data-lng="109.27" data-images="img/pasar-tradisional.jpg" data-title="Pasar Tradisional Banjarnegara" data-desc="Pasar tradisional: kuliner lokal & oleh-oleh." data-rating="4.0" data-reviews="60">
+      <img src="img/pasar-tradisional.jpg" alt="Pasar Tradisional Banjarnegara">
+      <div class="bd">
+        <h3>Pasar Tradisional Banjarnegara</h3>
+        <div class="meta">Pasar • Kuliner lokal</div>
+        <p class="desc">Tempat terbaik untuk mencoba kuliner lokal dan membeli oleh-oleh.</p>
+      </div>
+    </article>
+
+    <article class="card" data-category="populer" data-lat="-7.19" data-lng="109.34" data-images="img/salak-pondoh.jpg" data-title="Agrowisata Salak Pondoh" data-desc="Agrowisata Salak: belajar panen & beli langsung." data-rating="4.1" data-reviews="33">
+      <img src="img/salak-pondoh.jpg" alt="Agrowisata Salak">
+      <div class="bd">
+        <h3>Agrowisata Salak Pondoh</h3>
+        <div class="meta">Agrowisata • Panen & beli</div>
+        <p class="desc">Pengunjung dapat melihat kebun salak dan membeli langsung dari petani.</p>
+      </div>
+    </article>
+
+    <article class="card" data-category="open" data-lat="-7.20" data-lng="109.35" data-images="img/dawet-ayu.jpg" data-title="Kuliner: Dawet Ayu" data-desc="Dawet Ayu: minuman tradisional khas Banjarnegara." data-rating="4.0" data-reviews="25">
+      <img src="img/dawet-ayu.jpg" alt="Dawet Ayu">
+      <div class="bd">
+        <h3>Kuliner: Dawet Ayu</h3>
+        <div class="meta">Minuman tradisional</div>
+        <p class="desc">Dawet Ayu adalah minuman tradisional terbuat dari cendol, santan, dan gula merah.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- Produk section -->
+<section id="produk" aria-labelledby="produkTitle">
+  <h2 id="produkTitle">Produk Lokal</h2>
+  <div class="grid" id="produkGrid">
+    <article class="card" data-category="populer" data-images="img/dawet-ayu.jpg" data-title="Dawet Ayu" data-desc="Minuman tradisional khas Banjarnegara." data-rating="4.0" data-reviews="25">
+      <img src="img/dawet-ayu.jpg" alt="Dawet Ayu">
+      <div class="bd">
+        <h3>Dawet Ayu</h3>
+        <div class="meta">Minuman tradisional • Favorit wisatawan</div>
+        <p class="desc">Minuman penyegar identik dengan Banjarnegara — cocok sebagai oleh-oleh.</p>
+      </div>
+    </article>
+
+    <article class="card" data-category="terdekat" data-images="img/batik-gumelem.jpg" data-title="Kerajinan & Batik Gumelem" data-desc="Kerajinan batik khas daerah." data-rating="4.2" data-reviews="14">
+      <img src="img/batik-gumelem.jpg" alt="Batik Gumelem">
+      <div class="bd">
+        <h3>Kerajinan & Batik Gumelem</h3>
+        <div class="meta">Kerajinan • Motif lokal</div>
+        <p class="desc">Batik dan anyaman lokal menawarkan pola-pola unik.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- gallery -->
+<section id="galeri" aria-labelledby="galeriTitle">
+  <h2 id="galeriTitle">Galeri Foto</h2>
+  <div class="gallery">
+    <div class="big" style="background-image:url('img/galeri-besar.jpg')"></div>
+    <div class="small">
+      <img src="img/pengunjung.jpg" alt="Pengunjung">
+      <img src="img/kuliner-lokal.jpg" alt="Kuliner lokal">
+    </div>
+  </div>
+</section>
+
+<!-- kontak + booking + map (statis) -->
+<section id="kontak" aria-labelledby="kontakTitle">
+  <h2 id="kontakTitle">Kontak, Lokasi & Pemesanan</h2>
+  <div class="contact-row">
+    <div class="map" aria-hidden="false">
+      <figure>
+        <!-- Ganti gambar peta statis lokal di folder img/ -->
+        <img class="map-img" src="img/peta-banjarnegara.jpg" alt="Peta lokasi Dinas Pariwisata dan Kebudayaan Kabupaten Banjarnegara">
+        <div class="map-cta">
+          <a class="btn" href="https://maps.app.goo.gl/gB3KiHh2gM7YgB4T8" target="_blank" rel="noopener">Lihat di Google Maps</a>
+        </div>
+      </figure>
+    </div>
+
+    <aside class="contact-box">
+      <p><strong>Alamat:</strong><br>Jl. Selamanik No. 35, Kutabanjarnegara, Kec. Banjarnegara, Kabupaten Banjarnegara, Jawa Tengah 53418</p>
+      <p><strong>Jam Operasional:</strong><br>Senin–Jumat 08:00–16:00</p>
+      <p><strong>Kontak:</strong><br><a id="contactWA" href="https://wa.me/6285822902866" target="_blank" rel="noopener">+62 858-2290-2866</a></p>
+      <p style="margin-top:8px;color:var(--muted)">Gambar contoh menggunakan file lokal di folder <code>img/</code>.</p>
+    </aside>
+  </div>
+
+  <!-- Booking form -->
+  <div class="booking" aria-labelledby="bookingTitle">
+    <h3 id="bookingTitle">Form Pemesanan (Contoh)</h3>
+    <p style="margin-top:0;color:var(--muted)">Isi data berikut lalu klik "Kirim via WhatsApp" untuk mengirim detail ke nomor layanan.</p>
+
+    <div class="form-row">
+      <input id="bookName" type="text" placeholder="Nama lengkap" aria-label="Nama lengkap">
+      <input id="bookPhone" type="tel" placeholder="Nomor telepon (WhatsApp) Anda" aria-label="Nomor telepon">
+    </div>
+
+    <div class="form-row">
+      <input id="bookEmail" type="email" placeholder="Email (opsional)" aria-label="Email">
+      <input id="bookDate" type="date" aria-label="Tanggal kunjungan">
+    </div>
+
+    <div class="form-row">
+      <select id="bookDest" aria-label="Pilih destinasi">
+        <option value="Dataran Tinggi Dieng">Dataran Tinggi Dieng</option>
+        <option value="Curug Pitu">Curug Pitu</option>
+        <option value="Serayu Rafting">Serayu Rafting</option>
+        <option value="Telaga Merdada">Telaga Merdada</option>
+        <option value="Candi Arjuna">Candi Arjuna</option>
+        <option value="Agrowisata Salak Pondoh">Agrowisata Salak Pondoh</option>
+        <option value="Kuliner Dawet Ayu">Kuliner Dawet Ayu</option>
+      </select>
+      <input id="bookGuests" type="number" min="1" value="2" aria-label="Jumlah pengunjung">
+    </div>
+
+    <div class="form-row single">
+      <textarea id="bookMsg" placeholder="Pesan / permintaan khusus (opsional)" aria-label="Pesan"></textarea>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn" id="sendBookingBtn">Kirim via WhatsApp</button>
+      <button class="btn" id="copyBtn" style="background:#4b5563">Salin detail</button>
+    </div>
+  </div>
+</section>
+
+  </main>  <!-- Modal Quick View -->  <div class="modal" id="modal">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-body">
+        <div>
+          <img id="modalImg" src="" alt="Gambar destinasi">
+        </div>
+        <div class="modal-content">
+          <h3 id="modalTitle">Judul</h3>
+          <div class="rating" id="modalRating"></div>
+          <p id="modalDesc"></p>
+          <p class="meta" id="modalMeta"></p>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn" id="modalBookBtn">Booking via WA</button>
+            <button class="btn" id="modalClose" style="background:#e11d48">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>  <!-- floating WhatsApp FAB -->  <a class="wa-fab" id="waFab" href="https://wa.me/6285822902866" target="_blank" aria-label="Chat via WhatsApp">
+    <img src="img/whatsapp.svg" alt="WA">
+  </a>  <footer>
+    © <span id="year"></span> Pariwisata Banjarnegara — contoh website
+  </footer>  <script>
+    // ---------- Utils ----------
+    const $ = (s, root = document) => root.querySelector(s);
+    const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
+    function makeEl(tag, attrs = {}, children = []) {
+      const e = document.createElement(tag);
+      for (let k in attrs) {
+        if (k === 'class') e.className = attrs[k];
+        else if (k === 'html') e.innerHTML = attrs[k];
+        else e.setAttribute(k, attrs[k]);
+      }
+      children.forEach(c => e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+      return e;
+    }
+
+    // ---------- Theme (dark mode) ----------
+    const themeToggle = document.getElementById('themeToggle');
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    function applyTheme(t) {
+      if (t === 'dark') root.setAttribute('data-theme', 'dark');
+      else root.removeAttribute('data-theme');
+      themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('theme', t);
+    }
+    applyTheme(savedTheme);
+    themeToggle.addEventListener('click', () => applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+
+    // ---------- Hero slider ----------
+    (function heroSlider(){
+      const slides = $$('#slides .slide');
+      const dotsContainer = $('#dots');
+      const titleEl = $('#heroTitle');
+      const descEl = $('#heroDesc');
+      const prev = $('#prevBtn');
+      const next = $('#nextBtn');
+      let current = 0;
+      let timer = null;
+      // create dots
+      slides.forEach((s,i)=>{
+        const d = makeEl('button', {class:'dot', 'aria-label': `Slide ${i+1}`, 'data-i': i});
+        if(i===0) d.classList.add('active');
+        dotsContainer.appendChild(d);
+        d.addEventListener('click', ()=> goTo(i));
+      });
+      function show(i){
+        slides.forEach((s, idx)=> s.classList.toggle('show', idx===i));
+        $$('.dot').forEach((dot,idx)=> dot.classList.toggle('active', idx===i));
+        const s = slides[i];
+        titleEl.textContent = s.dataset.title || titleEl.textContent;
+        descEl.textContent = s.dataset.desc || descEl.textContent;
+      }
+      function goTo(i){
+        current = (i + slides.length) % slides.length;
+        show(current);
+        restart();
+      }
+      function prevSlide(){ goTo(current-1) }
+      function nextSlide(){ goTo(current+1) }
+      prev.addEventListener('click', prevSlide);
+      next.addEventListener('click', nextSlide);
+      function restart(){
+        clearInterval(timer);
+        timer = setInterval(()=> goTo(current+1), 4500);
+      }
+      restart();
+      show(0);
+    })();
+
+    // ---------- Intersection reveal ----------
+    (function revealOnScroll(){
+      const io = new IntersectionObserver(entries=>{
+        entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+      }, {threshold: 0.08});
+      document.querySelectorAll('main section, .hero').forEach(s => io.observe(s));
+    })();
+
+    // ---------- Card filters & search & count ----------
+    const chips = $$('.chip');
+    const searchInput = $('#searchInput');
+    const searchBtn = $('#searchBtn');
+    const cardContainer = $('#cardContainer');
+    const cards = Array.from(cardContainer.querySelectorAll('.card'));
+    const resultCount = $('#resultCount');
+    const loader = document.querySelector('.loader');
+
+    function updateCount() {
+      const visible = cards.filter(c => c.style.display !== 'none').length;
+      resultCount.textContent = `Menampilkan ${visible} hasil`;
+    }
+
+    function applyFilter(filter, q = '') {
+      loader.style.display = 'block';
+      setTimeout(()=>{
+        const ql = (q || '').trim().toLowerCase();
+        cards.forEach(card=>{
+          const title = (card.dataset.title || card.querySelector('h3')?.innerText || '').toLowerCase();
+          const text = (card.dataset.desc || card.innerText || '').toLowerCase();
+          const category = (card.dataset.category || '').toLowerCase();
+          const matchQ = ql === '' ? true : (title.includes(ql) || text.includes(ql));
+          const matchCategory = filter === 'all' ? true : category.split(' ').includes(filter);
+          const show = matchQ && matchCategory;
+          card.style.display = show ? '' : 'none';
+        });
+        updateCount();
+        loader.style.display = 'none';
+      }, 240);
+    }
+
+    chips.forEach(chip=>{
+      chip.addEventListener('click', ()=>{
+        chips.forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+        const filter = chip.dataset.filter || 'all';
+        applyFilter(filter, searchInput.value);
+      });
+    });
+
+    searchBtn.addEventListener('click', ()=> {
+      const active = $('.chip.active')?.dataset.filter || 'all';
+      applyFilter(active, searchInput.value);
+    });
+    searchInput.addEventListener('keydown', (e)=> { if(e.key === 'Enter') searchBtn.click(); });
+
+    // initial
+    applyFilter('all', '');
+
+    // ---------- Modal quick view ----------
+    const modal = $('#modal');
+    const modalImg = $('#modalImg');
+    const modalTitle = $('#modalTitle');
+    const modalDesc = $('#modalDesc');
+    const modalMeta = $('#modalMeta');
+    const modalRating = $('#modalRating');
+    const modalClose = $('#modalClose');
+    const modalBookBtn = $('#modalBookBtn');
+
+    function renderRating(container, value, reviews){
+      container.innerHTML = '';
+      const full = Math.floor(value);
+      for(let i=0;i<full;i++) container.appendChild(makeEl('span',{class:'star'}, ['★']));
+      if(value - full >= 0.5) container.appendChild(makeEl('span',{class:'star'}, ['☆']));
+      const t = document.createElement('span');
+      t.style.marginLeft='8px';
+      t.style.color='var(--muted)';
+      t.textContent = `${value} (${reviews} ulasan)`;
+      container.appendChild(t);
+    }
+
+    // nomor WA layanan (tujuan pesan)
+    const WA_SERVICE = '6285822902866';
+
+    cards.forEach(card=>{
+      card.addEventListener('click', () => {
+        const img = card.dataset.images || card.querySelector('img')?.src;
+        const title = card.dataset.title || card.querySelector('h3')?.innerText;
+        const desc = card.dataset.desc || card.querySelector('.desc')?.innerText;
+        const meta = card.querySelector('.meta')?.innerText || '';
+        const rating = parseFloat(card.dataset.rating || '0');
+        const reviews = card.dataset.reviews || '0';
+
+        modalImg.src = img;
+        modalTitle.textContent = title;
+        modalDesc.textContent = desc;
+        modalMeta.textContent = meta;
+        renderRating(modalRating, rating, reviews);
+
+        modalBookBtn.onclick = () => {
+          const userPhone = document.getElementById('bookPhone').value || '-';
+          const text = `Halo, saya mau booking ${title}. Nama: ${document.getElementById('bookName').value || '-'} | Tgl: ${document.getElementById('bookDate').value || '-'} | Jumlah: ${document.getElementById('bookGuests').value || '1'} | WA saya: ${userPhone}`;
+          window.open(`https://wa.me/${WA_SERVICE}?text=${encodeURIComponent(text)}`, '_blank');
+        };
+
+        modal.classList.add('show');
+      });
+    });
+
+    modalClose.addEventListener('click', ()=> modal.classList.remove('show'));
+    modal.addEventListener('click', (e)=> { if(e.target === modal) modal.classList.remove('show'); });
+
+    // ---------- Booking form actions ----------
+    const sendBookingBtn = $('#sendBookingBtn');
+    const copyBtn = $('#copyBtn');
+
+    sendBookingBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const name = $('#bookName').value.trim();
+      const phone = $('#bookPhone').value.trim();
+      const email = $('#bookEmail').value.trim();
+      const date = $('#bookDate').value;
+      const dest = $('#bookDest').value;
+      const guests = $('#bookGuests').value || '1';
+      const msg = $('#bookMsg').value.trim();
+
+      if(!name || !phone || !date){
+        alert('Mohon isi Nama, Nomor telepon, dan Tanggal kunjungan.');
+        return;
+      }
+
+      const text = `Halo, saya mau pesan paket/kunjungan:\nNama: ${name}\nWA: ${phone}\nEmail: ${email || '-'}\nTanggal kunjungan: ${date}\nDestinasi: ${dest}\nJumlah pengunjung: ${guests}\nCatatan: ${msg || '-'}\n\nMohon info ketersediaan dan estimasi biaya. Terima kasih.`;
+
+      window.open(`https://wa.me/${WA_SERVICE}?text=${encodeURIComponent(text)}`, '_blank');
+    });
+
+    copyBtn.addEventListener('click', ()=>{
+      const text = `Pemesanan:\nNama: ${$('#bookName').value}\nWA: ${$('#bookPhone').value}\nEmail: ${$('#bookEmail').value}\nTanggal: ${$('#bookDate').value}\nDestinasi: ${$('#bookDest').value}\nJumlah: ${$('#bookGuests').value}\nCatatan: ${$('#bookMsg').value}`;
+      navigator.clipboard?.writeText(text).then(()=> alert('Detail pemesanan disalin ke clipboard.'));
+    });
+
+    // ---------- Mobile menu toggle ----------
+    (function mobileMenu(){
+      const menuBtn = $('#menuBtn');
+      const nav = document.querySelector('nav');
+      menuBtn.addEventListener('click', ()=> nav.classList.toggle('show'));
+      document.addEventListener('click', (e)=> {
+        if(!nav.contains(e.target) && !menuBtn.contains(e.target) && window.innerWidth < 768) nav.classList.remove('show');
+      });
+    })();
+
+    // ---------- Footer year ----------
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script></body>
+</html>
